@@ -1,8 +1,34 @@
 import asyncHandler from "../utils/asyncHandler.js";
-import {ApiError} from "../utils/ApiError.js";
+import { ApiError } from "../utils/ApiError.js";
 import ApiResponse from "../utils/ApiResponse.js";
-import {User} from "../models/user.models.js";
-import { uploadOnCloudinary, deleteFromCloudinary } from "../utils/cloudinary.js";
+import { User } from "../models/user.models.js";
+import {
+    uploadOnCloudinary,
+    deleteFromCloudinary,
+} from "../utils/cloudinary.js";
+
+const generateAccessAndRefreshToken = async (userId) => {
+    try {
+        const user = await User.findById(userId);
+
+        if (!user) {
+            throw new ApiError(404, "User not found");
+        }
+
+        const accessToken = user.generateAccessToken();
+        const refreshToken = user.generateRefreshToken();
+
+        user.refreshToken = refreshToken;
+        await user.save({
+            validateBeforeSave: false,
+        });
+
+        return { accessToken, refreshToken };
+    } catch (error) {
+        console.log("Error in generating access and refresh token: ", error);
+        throw new ApiError(500, "Something Went Wrong");
+    }
+};
 
 const registerUser = asyncHandler(async (req, res) => {
     const { fullname, email, username, password } = req.body;
@@ -39,7 +65,6 @@ const registerUser = asyncHandler(async (req, res) => {
     //     coverImage = await uploadOnCloudinary(coverLocalPath);
     // }
 
-
     // Better Approach
     let avatar;
     try {
@@ -68,24 +93,27 @@ const registerUser = asyncHandler(async (req, res) => {
             password,
             username: username.toLowerCase(),
         });
-    
+
         const createdUser = await User.findById(user._id).select(
             "-password -refreshToken"
         );
-    
+
         if (!createdUser) {
             throw new ApiError(500, "Something Went Wrong");
         }
-    
+
         return res
             .status(201)
             .json(
-                new ApiResponse(200, createdUser, "User Registered Successfully")
+                new ApiResponse(
+                    200,
+                    createdUser,
+                    "User Registered Successfully"
+                )
             );
     } catch (error) {
         console.log("Error in creating user: ", error);
-        
-        
+
         if (avatar) {
             await deleteFromCloudinary(avatar.public_id);
         }
@@ -93,7 +121,10 @@ const registerUser = asyncHandler(async (req, res) => {
             await deleteFromCloudinary(coverImage.public_id);
         }
 
-        throw new ApiError(500, "Something Went Wrong while creating a user and images were deleted");
+        throw new ApiError(
+            500,
+            "Something Went Wrong while creating a user and images were deleted"
+        );
     }
 });
 
