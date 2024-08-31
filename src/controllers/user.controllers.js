@@ -184,14 +184,36 @@ const loginUser = asyncHandler(async (req, res) => {
         );
 });
 
-// const logoutUser = asyncHandler(async (req, res) => {
+const logoutUser = asyncHandler(async (req, res) => {
+    // res.clearCookie("accessToken");
+    // res.clearCookie("refreshToken");
+    // return res
+    //     .status(200)
+    //     .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
 
-//     res.clearCookie("accessToken");
-//     res.clearCookie("refreshToken");
-//     return res
-//         .status(200)
-//         .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
-// });
+    await User.findByIdAndUpdate(
+        req.user._id,
+        {
+            $set: {
+                refreshToken: undefined,
+            },
+        },
+        {
+            new: true,
+        }
+    );
+
+    const options = {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+    };
+
+    return res
+        .status(200)
+        .clearCookie("accessToken", options)
+        .clearCookie("refreshToken", options)
+        .json(new ApiResponse(200, {}, "User Logged Out Successfully"));
+});
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
     const { incomingRefreshToken } =
@@ -242,4 +264,4 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
     }
 });
 
-export { registerUser, loginUser, refreshAccessToken };
+export { registerUser, loginUser, refreshAccessToken, logoutUser };
