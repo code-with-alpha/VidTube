@@ -1,7 +1,7 @@
 {
   "name": "video_tube",
   "version": "1.0.0",
-  "description": "\"Back-End Course | Hitesh Choudhary\"",
+  "description": "\"Back-End of a Video Streaming Platform i.e. VidTube\"",
   "main": "index.js",
   "type": "module",
   "scripts": {
@@ -11,7 +11,8 @@
   },
   "keywords": [
     "Backend",
-    "mongoose"
+    "mongoose",
+    "express"
   ],
   "author": "CodeWithAlpha",
   "license": "ISC",
